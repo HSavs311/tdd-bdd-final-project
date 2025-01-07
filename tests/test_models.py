@@ -30,6 +30,7 @@ from decimal import Decimal
 from service.models import Product, Category, db
 from service import app
 from tests.factories import ProductFactory
+from service.models import DataValidationError
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
@@ -243,4 +244,23 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(found.count(), count)
         # Check each product's price matches the expected price.
         for product in found:
-            self.assertEqual(product.price, price)
+            self.assertEqual(product.price, price)         
+            
+    def test_update_a_product_null_id(self):
+        """It should fail to Update a Product due to null ID"""
+        # Create a Product using the ProductFactory
+        product = ProductFactory()
+        # Add a log message displaying the product for debugging errors
+        app.logger.info(f"Request to create product: {product}")
+        # Set the ID of the product object to None and then create the product.
+        product.id = None
+        # Create a Product
+        product.create()
+        # Log the product object again after it has been created 
+        # to verify that the product was created with the desired properties.
+        app.logger.info(f"Request to create product: {product}")
+        self.assertIsNotNone(product.id)
+        # Try to Update it with null ID
+        product.description = "testing"
+        product.id = None
+        self.assertRaises(DataValidationError,product.update)
