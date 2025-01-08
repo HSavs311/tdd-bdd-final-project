@@ -219,7 +219,19 @@ class TestProductRoutes(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         # make sure they are deleted
         response = self.client.get(f"{BASE_URL}/{test_product.id}")
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ----------------------------------------------------------
+    # TEST LIST ALL
+    # ----------------------------------------------------------			
+		
+    def test_get_product_list(self):
+        """It should Get a list of Products"""
+        self._create_products(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)        
         
     ######################################################################
     # Utility functions
@@ -231,4 +243,4 @@ class TestProductRoutes(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         # logging.debug("data = %s", data)
-        return len(data)
+        return len(data)        
