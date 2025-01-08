@@ -205,7 +205,21 @@ class TestProductRoutes(TestCase):
         del new_product["name"]
         new_product["description"] = "unknown"
         response = self.client.put(f"{BASE_URL}/{new_product['id']}", json=new_product)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)    
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # ----------------------------------------------------------
+    # TEST DELETE
+    # ----------------------------------------------------------		
+		
+    def test_delete_product(self):
+        """It should Delete a Product"""
+        products = self._create_products(5)
+        test_product = products[0]
+        response = self.client.delete(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        # make sure they are deleted
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)        
         
     ######################################################################
     # Utility functions
