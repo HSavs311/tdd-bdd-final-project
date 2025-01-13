@@ -131,7 +131,7 @@ class TestProductModel(unittest.TestCase):
         product.id = None
         # Create a Product
         product.create()
-        # Log the product object again after it has been created 
+        # Log the product object again after it has been created
         # to verify that the product was created with the desired properties.
         app.logger.info(f"Request to create product: {product}")
         self.assertIsNotNone(product.id)
@@ -145,31 +145,11 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(len(products), 1)
         self.assertEqual(products[0].id, original_id)
         self.assertEqual(products[0].description, "testing")
-        
-            
-    def test_update_a_product_null_id(self):
-        """It should fail to Update a Product due to null ID"""
-        # Create a Product using the ProductFactory
-        product = ProductFactory()
-        # Add a log message displaying the product for debugging errors
-        app.logger.info(f"Request to create product: {product}")
-        # Set the ID of the product object to None and then create the product.
-        product.id = None
-        # Create a Product
-        product.create()
-        # Log the product object again after it has been created 
-        # to verify that the product was created with the desired properties.
-        app.logger.info(f"Request to create product: {product}")
-        self.assertIsNotNone(product.id)
-        # Try to Update it with null ID
-        product.description = "testing"
-        product.id = None
-        self.assertRaises(DataValidationError,product.update)        
 
     def test_delete_a_product(self):
         """It should Delete a Product"""
         product = ProductFactory()
-         # Create a Product
+        # Create a Product
         product.create()
         self.assertEqual(len(Product.all()), 1)
         # delete the product and make sure it is gone
@@ -201,9 +181,9 @@ class TestProductModel(unittest.TestCase):
         count = len([product for product in products if product.name == name])
         # Retrieve products from the database that have the specified name.
         found = Product.find_by_name(name)
-        #Check the count of the found products matches the expected count.
+        # Check the count of the found products matches the expected count.
         self.assertEqual(found.count(), count)
-        #Check each product’s name matches the expected name.
+        # Check each product’s name matches the expected name.
         for product in found:
             self.assertEqual(product.name, name)
 
@@ -221,7 +201,7 @@ class TestProductModel(unittest.TestCase):
         found = Product.find_by_availability(available)
         # Check the count of the found products matches the expected count.
         self.assertEqual(found.count(), count)
-        #Check each product's availability matches the expected availability.
+        # Check each product's availability matches the expected availability.
         for product in found:
             self.assertEqual(product.available, available)
 
@@ -235,7 +215,7 @@ class TestProductModel(unittest.TestCase):
         category = products[0].category
         # Count the number of occurrences of the product category in the list
         count = len([product for product in products if product.category == category])
-        # Retrieve products from the database that have the specified category        
+        # Retrieve products from the database that have the specified category
         found = Product.find_by_category(category)
         # Check the count of the found products matches the expected count.
         self.assertEqual(found.count(), count)
@@ -243,7 +223,7 @@ class TestProductModel(unittest.TestCase):
         for product in found:
             self.assertEqual(product.category, category)
 
-    def test_find_by_price(self): 
+    def test_find_by_price(self):
         """It should Find Products by Price"""
         # Create 10 Products
         products = ProductFactory.create_batch(10)
@@ -253,10 +233,29 @@ class TestProductModel(unittest.TestCase):
         price = products[0].price
         # Count the number of occurrences of the product price in the list
         count = len([product for product in products if product.price == price])
-        # Retrieve products from the database that have the specified price        
+        # Retrieve products from the database that have the specified price
         found = Product.find_by_price(price)
         # Check the count of the found products matches the expected count.
         self.assertEqual(found.count(), count)
         # Check each product's price matches the expected price.
         for product in found:
             self.assertEqual(product.price, price)
+
+    def test_update_a_product_null_id(self):
+        """It should fail to Update a Product due to null ID"""
+        # Create a Product using the ProductFactory
+        product = ProductFactory()
+        # Add a log message displaying the product for debugging errors
+        app.logger.info(f"Request to create product: {product}")
+        # Set the ID of the product object to None and then create the product.
+        product.id = None
+        # Create a Product
+        product.create()
+        # Log the product object again after it has been created
+        # to verify that the product was created with the desired properties.
+        app.logger.info(f"Request to create product: {product}")
+        self.assertIsNotNone(product.id)
+        # Try to Update it with null ID
+        product.description = "testing"
+        product.id = None
+        self.assertRaises(DataValidationError, product.update)
