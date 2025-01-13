@@ -155,6 +155,11 @@ class TestProductRoutes(TestCase):
         response = self.client.post(BASE_URL, data="bad data")
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
+    def test_create_product_wrong_content_type(self):
+        """It should not Create a Product with wrong Content-Type"""
+        response = self.client.post(BASE_URL, data={}, content_type="plain/text")
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+		
     # ----------------------------------------------------------
     # TEST GET
     # ----------------------------------------------------------		
@@ -174,7 +179,7 @@ class TestProductRoutes(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         data = response.get_json()
         self.assertIn("was not found", data["message"])
-
+		
     # ----------------------------------------------------------
     # TEST UPDATE
     # ----------------------------------------------------------		
@@ -207,7 +212,7 @@ class TestProductRoutes(TestCase):
         new_product["description"] = "unknown"
         response = self.client.put(f"{BASE_URL}/{new_product['id']}", json=new_product)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
+		
     # ----------------------------------------------------------
     # TEST DELETE
     # ----------------------------------------------------------		
@@ -221,7 +226,7 @@ class TestProductRoutes(TestCase):
         # make sure they are deleted
         response = self.client.get(f"{BASE_URL}/{test_product.id}")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
+		
     # ----------------------------------------------------------
     # TEST LIST ALL
     # ----------------------------------------------------------			
@@ -233,7 +238,7 @@ class TestProductRoutes(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 5)
-        
+		
     # ----------------------------------------------------------
     # TEST LIST BY NAME
     # ----------------------------------------------------------			
@@ -251,8 +256,8 @@ class TestProductRoutes(TestCase):
         self.assertEqual(len(data), name_count)
         # check the data just to be sure
         for product in data:
-            self.assertEqual(product["name"], test_name)   
-
+            self.assertEqual(product["name"], test_name)
+			
     # ----------------------------------------------------------
     # TEST LIST BY CATEGORY
     # ----------------------------------------------------------				
@@ -273,7 +278,7 @@ class TestProductRoutes(TestCase):
         # check the data just to be sure
         for product in data:
             self.assertEqual(product["category"], category.name)
-
+			
     # ----------------------------------------------------------
     # TEST LIST BY AVAILABILITY
     # ----------------------------------------------------------				
@@ -292,7 +297,9 @@ class TestProductRoutes(TestCase):
         self.assertEqual(len(data), available_count)
         # check the data just to be sure
         for product in data:
-            self.assertEqual(product["available"], True)                  
+            self.assertEqual(product["available"], True)
+			
+
     ######################################################################
     # Utility functions
     ######################################################################
@@ -303,4 +310,4 @@ class TestProductRoutes(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         # logging.debug("data = %s", data)
-        return len(data)       
+        return len(data)
