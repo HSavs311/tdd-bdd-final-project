@@ -120,3 +120,28 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(found_product.name, product.name)
         self.assertEqual(found_product.description, product.description)
         self.assertEqual(found_product.price, product.price)
+
+    def test_update_a_product(self):
+        """It should Update a Product"""
+        # Create a Product using the ProductFactory
+        product = ProductFactory()
+        # Add a log message displaying the product for debugging errors
+        app.logger.info(f"Request to create product: {product}")
+        # Set the ID of the product object to None and then create the product.
+        product.id = None
+        # Create a Product
+        product.create()
+        # Log the product object again after it has been created
+        # to verify that the product was created with the desired properties.
+        app.logger.info(f"Request to create product: {product}")
+        self.assertIsNotNone(product.id)
+        # Update it and save it
+        product.description = "testing"
+        original_id = product.id
+        product.update()
+        # Fetch it back and make sure the id hasn't changed
+        # but the data did change
+        products = Product.all()
+        self.assertEqual(len(products), 1)
+        self.assertEqual(products[0].id, original_id)
+        self.assertEqual(products[0].description, "testing")
