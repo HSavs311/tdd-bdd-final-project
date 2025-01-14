@@ -1,3 +1,4 @@
+######################################################################
 # Copyright 2016, 2023 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,95 +12,111 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+######################################################################
 """
-Test cases for Product Model
+Product API Service Test Suite
 
-Test cases can be run with:
-    nosetests
-    coverage report -m
+Test cases can be run with the following:
+  nosetests -v --with-spec --spec-color
+  coverage report -m
+  codecov --token=$CODECOV_TOKEN
 
-While debugging just these tests it's convenient to use this:
-    nosetests --stop tests/test_models.py:TestProductModel
-
+  While debugging just these tests it's convenient to use this:
+    nosetests --stop tests/test_service.py:TestProductService
 """
 import os
 import logging
-import unittest
 from decimal import Decimal
-from service.models import Product, Category, db
+from unittest import TestCase
 from service import app
+from service.common import status
+from service.models import db, init_db, Product
 from tests.factories import ProductFactory
 
+# Disable all but critical errors during normal test run
+# uncomment for debugging failing tests
+# logging.disable(logging.CRITICAL)
+
+# DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///../db/test.db')
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
 )
+BASE_URL = "/products"
 
 
 ######################################################################
-#  P R O D U C T   M O D E L   T E S T   C A S E S
+#  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestProductModel(unittest.TestCase):
-    """Test Cases for Product Model"""
+class TestProductRoutes(TestCase):
+    """Product Service tests"""
 
     @classmethod
     def setUpClass(cls):
-        """This runs once before the entire test suite"""
+        """Run once before all tests"""
         app.config["TESTING"] = True
         app.config["DEBUG"] = False
+        # Set up the test database
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
-        Product.init_db(app)
+        init_db(app)
 
     @classmethod
     def tearDownClass(cls):
-        """This runs once after the entire test suite"""
+        """Run once after all tests"""
         db.session.close()
 
     def setUp(self):
-        """This runs before each test"""
+        """Runs before each test"""
+        self.client = app.test_client()
         db.session.query(Product).delete()  # clean up the last tests
         db.session.commit()
 
     def tearDown(self):
-        """This runs after each test"""
         db.session.remove()
 
-    ######################################################################
+    ############################################################
+    # Utility function to bulk create products
+    ############################################################
+    def _create_products(self, count: int = 1) -> list:
+        """Factory method to create products in bulk"""
+        products = []
+        for _ in range(count):
+            test_product = ProductFactory()
+            response = self.client.post(BASE_URL, json=test_product.serialize())
+            self.assertEqual(
+                response.status_code, status.HTTP_201_CREATED, "Could not create test product"
+            )
+            new_product = response.get_json()
+            test_product.id = new_product["id"]
+            products.append(test_product)
+        return products
+
+    ############################################################
     #  T E S T   C A S E S
-    ######################################################################
+    ############################################################
+    def test_index(self):
+        """It should return the index page"""
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(b"Product Catalog Administration", response.data)
 
-    def test_create_a_product(self):
-        """It should Create a product and assert that it exists"""
-        product = Product(name="Fedora", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
-        self.assertEqual(str(product), "<Product Fedora id=[None]>")
-        self.assertTrue(product is not None)
-        self.assertEqual(product.id, None)
-        self.assertEqual(product.name, "Fedora")
-        self.assertEqual(product.description, "A red hat")
-        self.assertEqual(product.available, True)
-        self.assertEqual(product.price, 12.50)
-        self.assertEqual(product.category, Category.CLOTHS)
+    def test_health(self):
+        """It should be healthy"""
+        response = self.client.get("/health")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data['message'], 'OK')
 
-    def test_add_a_product(self):
-        """It should Create a product and add it to the database"""
-        products = Product.all()
-        self.assertEqual(products, [])
-        product = ProductFactory()
-        product.id = None
-        product.create()
-        # Assert that it was assigned an id and shows up in the database
-        self.assertIsNotNone(product.id)
-        products = Product.all()
-        self.assertEqual(len(products), 1)
-        # Check that it matches the original product
-        new_product = products[0]
-        self.assertEqual(new_product.name, product.name)
-        self.assertEqual(new_product.description, product.description)
-        self.assertEqual(Decimal(new_product.price), product.price)
-        self.assertEqual(new_product.available, product.available)
-        self.assertEqual(new_product.category, product.category)
+    # ----------------------------------------------------------
+    # TEST CREATE
+    # ----------------------------------------------------------
+    def test_create_product(self):
+        """It should Create a new Product"""
+        test_product = ProductFactory()
+        logging.debug("Test Product: %s", test_product.serialize())
+        response = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_read_a_product(self):
         """It should Read a Product"""
